@@ -5,4 +5,11 @@ target_include_directories(test_circleq BEFORE PRIVATE
     ${CUNIT_INCLUDE_DIRS}
 )
 target_compile_options(test_circleq PRIVATE ${CIRCLEQ_C_FLAGS})
-add_test(NAME test_circleq COMMAND test_circleq)
+
+if(VALGRIND)
+    add_test(NAME test_circleq
+             COMMAND ${VALGRIND} ${VALGRIND_OPTIONS} ${CMAKE_CURRENT_BINARY_DIR}/test_circleq)
+else()
+    add_test(NAME test_circleq
+             COMMAND test_circleq)
+endif()

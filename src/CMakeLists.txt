@@ -1,1 +1,1 @@
-install(FILES circleq.h DESTINATION include)
+install(FILES circleq.h DESTINATION ${CMAKE_INSTALL_INCLUDEDIR})
