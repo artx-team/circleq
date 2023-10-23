@@ -1,0 +1,30 @@
+---
+Checks: [
+  '-*',
+  'clang-analyzer-*',
+  '-clang-analyzer-cplusplus.*',
+  '-clang-analyzer-security.*',
+  '-clang-analyzer-deadcode.DeadStores',
+  'clang-diagnostic-*',
+  'bugprone-*',
+  '-bugprone-reserved-identifier',
+  'concurrency-*',
+  'misc-*',
+  'performance-*',
+  'portability-*',
+  'readability-*',
+  '-readability-function-cognitive-complexity',
+  '-readability-identifier-length',
+  '-readability-isolate-declaration',
+  '-readability-magic-numbers',
+]
+CheckOptions:
+  readability-braces-around-statements.ShortStatementLines: 2
+WarningsAsErrors: 'clang-analyzer-unix.*,clang-analyzer-core.NullDereference'
+HeaderFileExtensions: ['h']
+ImplementationFileExtensions: ['c']
+HeaderFilterRegex: '\/src\/.*\.h$'
+FormatStyle: none
+InheritParentConfig: false
+UseColor: true
+...
