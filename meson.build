@@ -4,7 +4,7 @@ project('circleq', 'c',
     default_options: [
         'buildtype=debugoptimized',
         'default_library=static',
-        'c_std=c11',
+        'c_std=c99',
         'werror=true',
         'warning_level=2',
     ]

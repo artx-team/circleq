@@ -296,6 +296,96 @@ TEST(test_circleq_swap)
     assert_equal(i, 5);
 }
 
+static inline int circleq_entry_cmp(struct circleq_entry *e1,
+                                    struct circleq_entry *e2, void *arg)
+{
+    return (e1->value > e2->value) - (e1->value < e2->value);
+}
+
+TEST(test_circleq_merge)
+{
+    struct circleq_list list1 = CIRCLEQ_HEAD_INITIALIZER(list1);
+    struct circleq_list list2 = CIRCLEQ_HEAD_INITIALIZER(list2);
+    struct circleq_list list3 = CIRCLEQ_HEAD_INITIALIZER(list3);
+
+    CIRCLEQ_MERGE(&list1, &list2, circleq_entry_cmp, NULL, circleq_entry, entry);
+    CIRCLEQ_MERGE(&list1, &list3, circleq_entry_cmp, NULL, circleq_entry, entry);
+    assert_true(CIRCLEQ_EMPTY(&list1));
+    assert_true(CIRCLEQ_EMPTY(&list2));
+    assert_true(CIRCLEQ_EMPTY(&list3));
+
+    struct circleq_entry *entry;
+    struct circleq_entry entries1[5];
+    struct circleq_entry entries2[5];
+    struct circleq_entry entries3[5];
+
+    int values1[] = { 5, 6, 7, 8, 9 };
+    int values2[] = { 1, 2, 3, 4, 5 };
+    int values3[] = { 3, 4, 5, 6, 7 };
+    int results[] = { 1, 2, 3, 3, 4, 4, 5, 5, 5, 6, 6, 7, 7, 8, 9, 0 };
+
+    for (size_t i = 0; i < 5; ++i) {
+        entry = &entries1[i];
+        entry->value = values1[i];
+        CIRCLEQ_INSERT_TAIL(&list1, entry, entry);
+
+        entry = &entries2[i];
+        entry->value = values2[i];
+        CIRCLEQ_INSERT_TAIL(&list2, entry, entry);
+
+        entry = &entries3[i];
+        entry->value = values3[i];
+        CIRCLEQ_INSERT_TAIL(&list3, entry, entry);
+    }
+
+    for (size_t j = 0; j < 5; ++j) {
+        CIRCLEQ_MERGE(&list2, &list3, circleq_entry_cmp, NULL, circleq_entry, entry);
+        assert_true(CIRCLEQ_EMPTY(&list3));
+
+        CIRCLEQ_MERGE(&list1, &list2, circleq_entry_cmp, NULL, circleq_entry, entry);
+        assert_true(CIRCLEQ_EMPTY(&list2));
+
+        size_t i = 0;
+        CIRCLEQ_FOREACH(entry, &list1, entry) {
+            assert_not_null(entry);
+            assert_equal(entry->value, results[i++ % 16]);
+        }
+
+        assert_equal(i, 15);
+    }
+}
+
+TEST(test_circleq_mergesort)
+{
+    int values[] = { 5, 3, 1, 7, 7, 3, 9, 2, 5, 6, 4, 8, 4, 6, 5, 0 };
+    int result[] = { 1, 2, 3, 3, 4, 4, 5, 5, 5, 6, 6, 7, 7, 8, 9, 0 };
+
+    struct circleq_list list = CIRCLEQ_HEAD_INITIALIZER(list);
+    struct circleq_entry *entry;
+    struct circleq_entry entries[15];
+
+    CIRCLEQ_MERGESORT(&list, circleq_entry_cmp, NULL, circleq_entry, entry);
+    assert_true(CIRCLEQ_EMPTY(&list));
+
+    for (size_t i = 0; i < 15; ++i) {
+        entry = &entries[i];
+        entry->value = values[i];
+        CIRCLEQ_INSERT_TAIL(&list, entry, entry);
+    }
+
+    for (size_t j = 0; j < 5; ++j) {
+        CIRCLEQ_MERGESORT(&list, circleq_entry_cmp, NULL, circleq_entry, entry);
+
+        size_t i = 0;
+        CIRCLEQ_FOREACH(entry, &list, entry) {
+            assert_not_null(entry);
+            assert_equal(entry->value, result[i++ % 16]);
+        }
+
+        assert_equal(i, 15);
+    }
+}
+
 int main(void)
 {
     struct {
@@ -309,6 +399,8 @@ int main(void)
         { "circleq_remove_tail", test_circleq_remove_tail },
         { "circleq_concat", test_circleq_concat },
         { "circleq_swap", test_circleq_swap },
+        { "circleq_merge", test_circleq_merge },
+        { "circleq_mergesort", test_circleq_mergesort },
     };
 
     for (size_t i = 0, n = sizeof(tests) / sizeof(tests[0]); i < n; ++i) {

@@ -129,3 +129,72 @@
     for ((var) = ((var) ? (var) : CIRCLEQ_FIRST(head, field)); \
          (var) && ((tvar) = ((var) == CIRCLEQ_LAST(head) ? NULL : CIRCLEQ_NEXT(var, field)), 1); \
          (var) = (tvar))
+
+#define CIRCLEQ_MERGE(head1, head2, cmp, arg, type, field) do { \
+        struct type *cqprev = NULL; \
+        struct type *cqelm1 = CIRCLEQ_FIRST(head1, field); \
+        struct type *cqelm2; \
+        while ((cqelm2 = CIRCLEQ_FIRST(head2, field))) { \
+            CIRCLEQ_REMOVE_HEAD(head2, field); \
+            CIRCLEQ_FOREACH_FROM(cqelm1, head1, field) { \
+                if ((cmp)(cqelm2, cqelm1, arg) < 0) \
+                    break; \
+                cqprev = cqelm1; \
+            } \
+            if (cqprev) { \
+                CIRCLEQ_INSERT_AFTER(cqprev, cqelm2, field); \
+                if (CIRCLEQ_LAST(head1) == cqprev) \
+                    CIRCLEQ_LAST(head1) = cqelm2; \
+            } else { \
+                CIRCLEQ_INSERT_HEAD(head1, cqelm2, field); \
+            } \
+            cqprev = cqelm2; \
+        } \
+    } while (0)
+
+#define CIRCLEQ_MERGE_SUBL(var, i, head, len1, len2, elm, pos, cmp, arg, field) do { \
+        while ((pos) < (len1)) { \
+            (elm) = CIRCLEQ_NEXT(elm, field); \
+            (pos)++; \
+        } \
+        for ((i) = 0; (i) < (len1); ++(i)) { \
+            (var) = CIRCLEQ_FIRST(head, field); \
+            while ((pos) < (len1) + (len2) && \
+                   (cmp)(var, CIRCLEQ_NEXT(elm, field), arg) >= 0) { \
+                (elm) = CIRCLEQ_NEXT(elm, field); \
+                (pos)++; \
+            } \
+            if ((var) != (elm)) { \
+                CIRCLEQ_REMOVE_HEAD(head, field); \
+                CIRCLEQ_INSERT_AFTER(elm, var, field); \
+                if (CIRCLEQ_LAST(head) == (elm)) \
+                    CIRCLEQ_LAST(head) = (var); \
+                (elm) = (var); \
+            } \
+        } \
+    } while (0)
+
+#define CIRCLEQ_MERGESORT(head, cmp, arg, type, field) do { \
+        CIRCLEQ_HEAD(, type) cqhead = CIRCLEQ_HEAD_INITIALIZER(cqhead); \
+        unsigned long cqslen = 0, cqmask, cqmpos, cqidx; \
+        struct type *cqmelm, *cqtvar; \
+        while ((cqmelm = CIRCLEQ_FIRST(head, field))) { \
+            CIRCLEQ_REMOVE_HEAD(head, field); \
+            CIRCLEQ_INSERT_HEAD(&cqhead, cqmelm, field); \
+            for (cqmask = cqmpos = 1, cqslen++; \
+                 cqmask & ~cqslen; cqmask <<= 1) { \
+                CIRCLEQ_MERGE_SUBL(cqtvar, cqidx, &cqhead, \
+                                   cqmask, cqmask, cqmelm, cqmpos, \
+                                   cmp, arg, field); \
+            } \
+        } \
+        for (cqmelm = CIRCLEQ_FIRST(&cqhead, field), \
+             cqmpos = 1, cqmask = 2; cqmask < cqslen; cqmask <<= 1) { \
+            if (cqslen & cqmask) { \
+                CIRCLEQ_MERGE_SUBL(cqtvar, cqidx, &cqhead, \
+                                   cqslen & (cqmask - 1), cqmask, \
+                                   cqmelm, cqmpos, cmp, arg, field); \
+            } \
+        } \
+        CIRCLEQ_CONCAT(head, &cqhead, type, field); \
+    } while (0)
