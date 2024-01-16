@@ -299,6 +299,9 @@ TEST(test_circleq_swap)
 static inline int circleq_entry_cmp(struct circleq_entry *e1,
                                     struct circleq_entry *e2, void *arg)
 {
+    const char *__unit = (const char *)arg;
+    assert_not_null(e1);
+    assert_not_null(e2);
     return (e1->value > e2->value) - (e1->value < e2->value);
 }
 
@@ -308,8 +311,8 @@ TEST(test_circleq_merge)
     struct circleq_list list2 = CIRCLEQ_HEAD_INITIALIZER(list2);
     struct circleq_list list3 = CIRCLEQ_HEAD_INITIALIZER(list3);
 
-    CIRCLEQ_MERGE(&list1, &list2, circleq_entry_cmp, NULL, circleq_entry, entry);
-    CIRCLEQ_MERGE(&list1, &list3, circleq_entry_cmp, NULL, circleq_entry, entry);
+    CIRCLEQ_MERGE(&list1, &list2, circleq_entry_cmp, (void *)__unit, circleq_entry, entry);
+    CIRCLEQ_MERGE(&list1, &list3, circleq_entry_cmp, (void *)__unit, circleq_entry, entry);
     assert_true(CIRCLEQ_EMPTY(&list1));
     assert_true(CIRCLEQ_EMPTY(&list2));
     assert_true(CIRCLEQ_EMPTY(&list3));
@@ -339,10 +342,10 @@ TEST(test_circleq_merge)
     }
 
     for (size_t j = 0; j < 5; ++j) {
-        CIRCLEQ_MERGE(&list2, &list3, circleq_entry_cmp, NULL, circleq_entry, entry);
+        CIRCLEQ_MERGE(&list2, &list3, circleq_entry_cmp, (void *)__unit, circleq_entry, entry);
         assert_true(CIRCLEQ_EMPTY(&list3));
 
-        CIRCLEQ_MERGE(&list1, &list2, circleq_entry_cmp, NULL, circleq_entry, entry);
+        CIRCLEQ_MERGE(&list1, &list2, circleq_entry_cmp, (void *)__unit, circleq_entry, entry);
         assert_true(CIRCLEQ_EMPTY(&list2));
 
         size_t i = 0;
@@ -364,7 +367,7 @@ TEST(test_circleq_mergesort)
     struct circleq_entry *entry;
     struct circleq_entry entries[15];
 
-    CIRCLEQ_MERGESORT(&list, circleq_entry_cmp, NULL, circleq_entry, entry);
+    CIRCLEQ_MERGESORT(&list, circleq_entry_cmp, (void *)__unit, circleq_entry, entry);
     assert_true(CIRCLEQ_EMPTY(&list));
 
     for (size_t i = 0; i < 15; ++i) {
@@ -374,7 +377,7 @@ TEST(test_circleq_mergesort)
     }
 
     for (size_t j = 0; j < 5; ++j) {
-        CIRCLEQ_MERGESORT(&list, circleq_entry_cmp, NULL, circleq_entry, entry);
+        CIRCLEQ_MERGESORT(&list, circleq_entry_cmp, (void *)__unit, circleq_entry, entry);
 
         size_t i = 0;
         CIRCLEQ_FOREACH(entry, &list, entry) {
